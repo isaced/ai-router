@@ -34,14 +34,30 @@ import { AIRouter } from 'ai-router';
 const router = new AIRouter({
   providers: [
     {
-      name: 'openai',
+      name: 'openai-primary',
       type: 'openai',
-      apiKey: 'sk-xxx',
+      endpoint: 'https://api.openai.com/v1',
+      accounts: [
+        {
+          apiKey: 'sk-xxx',
+          models: ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo']
+        },
+        {
+          apiKey: 'sk-yyy',
+          models: ['gpt-3.5-turbo']
+        }
+      ],
     },
     {
-      name: 'gemini',
-      type: 'google',
-      apiKey: 'sk-abc123',
+      name: 'custom-provider',
+      type: 'custom',
+      endpoint: 'https://your-custom-api.com/v1',
+      accounts: [
+        {
+          apiKey: 'custom-key-1',
+          models: ['custom-model-1', 'custom-model-2'],
+        }
+      ]
     }
   ]
 });
