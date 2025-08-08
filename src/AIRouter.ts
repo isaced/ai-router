@@ -66,6 +66,7 @@ class AIRouter {
 
   /**
    * Sends a chat request to an appropriate AI provider based on the configured strategy.
+   * Uses onion model middleware pattern similar to Koa.js
    *
    * @param {ChatRequest} request - Chat request object
    * @param {string} request.model - Model to use for the request
@@ -76,26 +77,23 @@ class AIRouter {
   async chat(request: ChatRequest): Promise<ChatCompletion.ChatCompletion> {
     const middlewares = this.middlewares || [];
 
-    // 构建 next 链式调用
-    const dispatch = (i: number, req: ChatRequest): Promise<ChatRequest> => {
+    // 构建洋葱模型的中间件调用链
+    const dispatch = async (i: number, req: ChatRequest): Promise<ChatCompletion.ChatCompletion> => {
       if (i >= middlewares.length) {
-        return Promise.resolve(req);
+        // 最后一层：实际的 AI 请求处理
+        const providerModel = selectProvider(this.config);
+        if (!providerModel) {
+          throw new Error("No provider model found for the request");
+        }
+        return await sendRequest(providerModel, req);
       }
-      const mw = middlewares[i];
-      try {
-        return mw(req, (nextReq: ChatRequest) => dispatch(i + 1, nextReq));
-      } catch (error) {
-        return Promise.reject(error);
-      }
+      
+      const currentMiddleware = middlewares[i];
+      return await currentMiddleware(req, (nextReq: ChatRequest) => dispatch(i + 1, nextReq));
     };
 
     try {
-      const processedRequest = await dispatch(0, request);
-      const providerModel = selectProvider(this.config);
-      if (!providerModel) {
-        throw new Error("No provider model found for the request");
-      }
-      return await sendRequest(providerModel, processedRequest);
+      return await dispatch(0, request);
     } catch (error) {
       throw error;
     }
