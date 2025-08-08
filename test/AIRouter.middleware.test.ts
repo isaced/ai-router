@@ -1,8 +1,9 @@
 import { describe, test, expect, beforeEach, spyOn } from "bun:test";
 import AIRouter from "../src/AIRouter";
-import type { AIRouterConfig, ChatRequest } from "../src/types/types";
+import type { AIRouterConfig } from "../src/types/types";
 import type { Middleware } from "../src/types/middleware";
 import type { ChatCompletion } from "../src/types/completions";
+import type { ChatRequest } from "../src/types/chat";
 import * as selectProviderModule from "../src/core/selectProvider";
 import * as sendRequestModule from "../src/core/sendRequest";
 
@@ -176,7 +177,7 @@ describe("AIRouter Onion Model Middleware", () => {
     // Should follow onion model pattern: 1-before, 2-before, 3-before, 3-after, 2-after, 1-after
     expect(executionOrder).toEqual([
       "middleware1-before",
-      "middleware2-before", 
+      "middleware2-before",
       "middleware3-before",
       "middleware3-after",
       "middleware2-after",
@@ -258,7 +259,7 @@ describe("AIRouter Onion Model Middleware", () => {
 
   test("should support async middleware with delays", async () => {
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    
+
     const delayMiddleware: Middleware = async (req, next) => {
       await delay(10); // 模拟异步操作
       const response = await next(req);

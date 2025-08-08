@@ -1,5 +1,6 @@
 import type { ChatCompletion } from '../types/completions';
-import type { ChatRequest, ProviderModel } from '../types/types';
+import type { ProviderModel } from '../types/types';
+import type { ChatRequest } from '../types/chat';
 
 /**
  * Sends a chat request to an AI provider.

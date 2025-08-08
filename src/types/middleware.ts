@@ -1,5 +1,5 @@
+import type { ChatRequest } from "./chat";
 import type { ChatCompletion } from "./completions";
-import { ChatRequest } from "./types";
 
 /**
  * Middleware function type for processing requests and responses (Onion Model)

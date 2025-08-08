@@ -76,15 +76,3 @@ export interface AIRouterConfig {
    */
   strategy?: "random" | "least-loaded";
 }
-
-/**
- * Request object for a chat request.
- */
-export interface ChatRequest {
-  model?: string;
-  messages: Array<{
-    role: string;
-    content: string;
-  }>;
-  [key: string]: any; // Allow additional properties
-}

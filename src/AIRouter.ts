@@ -1,8 +1,9 @@
-import type { AIRouterConfig, ChatRequest } from "./types/types";
+import type { AIRouterConfig } from "./types/types";
+import type { ChatRequest } from "./types/chat";
 import type { ChatCompletion } from "./types/completions";
 import { selectProvider } from "./core/selectProvider";
 import { sendRequest } from "./core/sendRequest";
-import { Middleware } from "./types/middleware";
+import type { Middleware } from "./types/middleware";
 
 /**
  * A lightweight, framework-agnostic router for AI/LLM API requests.
@@ -87,7 +88,7 @@ class AIRouter {
         }
         return await sendRequest(providerModel, req);
       }
-      
+
       const currentMiddleware = middlewares[i];
       return await currentMiddleware(req, (nextReq: ChatRequest) => dispatch(i + 1, nextReq));
     };
