@@ -133,7 +133,7 @@ describe('AIRouter Middleware Edge Cases', () => {
 
   test('should handle empty middleware array', async () => {
     // Explicitly set empty middleware array
-    (router as any).config.middleware = [];
+    (router as any).middlewares = [];
 
     const request: ChatRequest = {
       messages: [{ role: 'user', content: 'Hello' }]

@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, mock, spyOn } from "bun:test";
+import { describe, test, expect, beforeEach, spyOn } from "bun:test";
 import AIRouter from "../src/AIRouter";
 import type { AIRouterConfig, ChatRequest } from "../src/types/types";
 import type { Middleware } from "../src/types/middleware";
