@@ -1,3 +1,3 @@
 import AIRouter from './AIRouter';
 export { AIRouter };
-export * from './types';
+export * from './types/types';

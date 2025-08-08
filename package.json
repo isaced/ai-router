@@ -1,9 +1,28 @@
 {
+  "name": "ai-router",
+  "version": "0.0.1",
+  "description": "A lightweight, framework-agnostic router for AI/LLM API requests.",
+  "main": "src/index.ts",
   "type": "module",
+  "exports": "./src/index.ts",
+  "keywords": [
+    "ai",
+    "llm",
+    "router",
+    "api",
+    "request"
+  ],
   "scripts": {
-    "test": "node --test"
+    "test": "bun test"
   },
   "devDependencies": {
-    "@types/node": "^24.2.0"
-  }
+    "@types/bun": "^1.2.19"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/isaced/ai-router.git"
+  },
+  "homepage": "https://github.com/isaced/ai-router",
+  "author": "isaced",
+  "license": "MIT"
 }

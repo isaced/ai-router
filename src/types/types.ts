@@ -43,6 +43,26 @@ export interface Provider {
 }
 
 /**
+ * Configuration for a model of an AI service provider.
+ */
+export interface ProviderModel {
+  /**
+   * Model name.
+   */
+  model: string;
+
+  /**
+   * Endpoint for the model.
+   */
+  endpoint: string;
+
+  /**
+   * API key for the model.
+   */
+  apiKey: string;
+}
+
+/**
  * Configuration for the AIRouter.
  */
 export interface AIRouterConfig {
@@ -73,29 +93,6 @@ export interface ChatRequest {
     role: string;
     content: string;
   }>;
-}
-
-/**
- * Response object for a chat request.
- */
-export interface ChatResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: Array<{
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }>;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
 }
 
 export type Middleware = (req: any, next: (req: any) => Promise<any>) => Promise<any>;
