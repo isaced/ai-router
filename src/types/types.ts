@@ -1,8 +1,9 @@
+import { Middleware } from "./middleware";
+
 /**
  * Account configuration for an AI service provider.
  */
 export interface Account {
-
   /**
    * API key for the account.
    */
@@ -18,7 +19,6 @@ export interface Account {
  * Configuration for an AI service provider.
  */
 export interface Provider {
-
   /**
    * Name of the provider.
    */
@@ -27,11 +27,11 @@ export interface Provider {
   /**
    * Type of the provider.
    */
-  type?: 'openai' | 'ollama';
+  type?: "openai" | "ollama";
 
   /**
    * Endpoint for the provider's API.
-   * 
+   *
    * @default 'https://api.openai.com/v1'
    */
   endpoint?: string;
@@ -73,10 +73,10 @@ export interface AIRouterConfig {
 
   /**
    * Strategy for selecting providers.
-   * 
+   *
    * @default 'random'
    */
-  strategy?: 'random' | 'least-loaded';
+  strategy?: "random" | "least-loaded";
 
   /**
    * List of middleware functions to use.
@@ -93,6 +93,5 @@ export interface ChatRequest {
     role: string;
     content: string;
   }>;
+  [key: string]: any; // Allow additional properties
 }
-
-export type Middleware = (req: any, next: (req: any) => Promise<any>) => Promise<any>;
