@@ -2,6 +2,7 @@ import type { AIRouterConfig, ChatRequest } from "./types/types";
 import type { ChatCompletion } from "./types/completions";
 import { selectProvider } from "./core/selectProvider";
 import { sendRequest } from "./core/sendRequest";
+import { Middleware } from "./types/middleware";
 
 /**
  * A lightweight, framework-agnostic router for AI/LLM API requests.
@@ -30,7 +31,16 @@ import { sendRequest } from "./core/sendRequest";
  * ```
  */
 class AIRouter {
+
+  /**
+   * Configuration object for the router.
+   */
   private config: AIRouterConfig;
+
+  /**
+   * List of middleware functions to use.
+   */
+  private middlewares: Middleware[] = [];
 
   /**
    * Creates an instance of AIRouter.
@@ -50,10 +60,7 @@ class AIRouter {
    * @returns {AIRouter} The router instance for chaining
    */
   use(middleware: Middleware): AIRouter {
-    if (!this.config.middleware) {
-      this.config.middleware = [];
-    }
-    this.config.middleware.push(middleware);
+    this.middlewares.push(middleware);
     return this;
   }
 
@@ -67,7 +74,7 @@ class AIRouter {
    * @throws {Error} If no provider is found for the requested model
    */
   async chat(request: ChatRequest): Promise<ChatCompletion.ChatCompletion> {
-    const middlewares = this.config.middleware || [];
+    const middlewares = this.middlewares || [];
 
     // 构建 next 链式调用
     const dispatch = (i: number, req: ChatRequest): Promise<ChatRequest> => {

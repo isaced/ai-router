@@ -93,8 +93,8 @@ describe("AIRouter Middleware", () => {
 
     // Should return router instance for chaining
     expect(result).toBe(router);
-    expect((router as any).config.middleware).toHaveLength(1);
-    expect((router as any).config.middleware[0]).toBe(middleware);
+    expect((router as any).middlewares).toHaveLength(1);
+    expect((router as any).middlewares[0]).toBe(middleware);
   });
 
   test("should add multiple middleware using use() method", () => {
@@ -103,9 +103,9 @@ describe("AIRouter Middleware", () => {
 
     router.use(middleware1).use(middleware2);
 
-    expect((router as any).config.middleware).toHaveLength(2);
-    expect((router as any).config.middleware[0]).toBe(middleware1);
-    expect((router as any).config.middleware[1]).toBe(middleware2);
+    expect((router as any).middlewares).toHaveLength(2);
+    expect((router as any).middlewares[0]).toBe(middleware1);
+    expect((router as any).middlewares[1]).toBe(middleware2);
   });
 
   test("should execute single middleware that modifies request", async () => {

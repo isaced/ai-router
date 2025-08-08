@@ -1,5 +1,3 @@
-import { Middleware } from "./middleware";
-
 /**
  * Account configuration for an AI service provider.
  */
@@ -77,11 +75,6 @@ export interface AIRouterConfig {
    * @default 'random'
    */
   strategy?: "random" | "least-loaded";
-
-  /**
-   * List of middleware functions to use.
-   */
-  middleware?: Middleware[];
 }
 
 /**
