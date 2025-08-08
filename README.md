@@ -1,5 +1,7 @@
 # ai-router 🤖🔄
 
+[![npm version](https://badge.fury.io/js/@isaced%2Fai-router.svg)](https://www.npmjs.com/package/@isaced/ai-router)
+
 **A lightweight, framework-agnostic router for AI/LLM API requests.**
 
 Distribute traffic across multiple providers (OpenAI, Anthropic, Gemini, etc.), accounts, and models with built-in **load balancing**, **failover**, and **easy extensibility**.
@@ -22,13 +24,13 @@ Perfect for developers building resilient, scalable AI applications without vend
 ## 📦 Installation
 
 ```bash
-npm install ai-router
+npm install @isaced/ai-router
 ```
 
 ## 🚀 Quick Start
 
 ```ts
-import { AIRouter } from 'ai-router';
+import { AIRouter } from '@isaced/ai-router';
 
 // Define your providers and API keys
 const router = new AIRouter({
