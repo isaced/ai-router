@@ -1,5 +1,5 @@
 {
-  "name": "ai-router",
+  "name": "@isaced/ai-router",
   "version": "0.0.1",
   "description": "A lightweight, framework-agnostic router for AI/LLM API requests.",
   "main": "src/index.ts",
