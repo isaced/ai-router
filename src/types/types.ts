@@ -1,4 +1,58 @@
 /**
+ * Rate limiting configuration for an account
+ */
+export interface RateLimit {
+  /**
+   * Requests per minute limit
+   */
+  rpm?: number;
+
+  /**
+   * Tokens per minute limit (input tokens)
+   */
+  tpm?: number;
+
+  /**
+   * Requests per day limit
+   */
+  rpd?: number;
+}
+
+/**
+ * Usage tracking data for rate limits
+ */
+export interface UsageData {
+  requestsThisMinute: number;
+  tokensThisMinute: number;
+  requestsToday: number;
+  lastResetTime: {
+    minute: number;  // Timestamp in minutes
+    day: number;     // Timestamp in days
+  };
+}
+
+/**
+ * Abstract interface for storing and retrieving usage data
+ */
+export interface UsageStorage {
+  /**
+   * Get usage data for an account
+   */
+  get(accountId: string): Promise<UsageData | null>;
+
+  /**
+   * Set usage data for an account
+   */
+  set(accountId: string, usage: UsageData): Promise<void>;
+
+  /**
+   * Atomically increment usage counters
+   * Returns the updated usage data after increment
+   */
+  increment?(accountId: string, requestCount: number, tokenCount: number): Promise<UsageData>;
+}
+
+/**
  * Account configuration for an AI service provider.
  */
 export interface Account {
@@ -11,6 +65,11 @@ export interface Account {
    * List of models supported by the account.
    */
   models: string[];
+
+  /**
+   * Rate limiting configuration for this account
+   */
+  rateLimit?: RateLimit;
 }
 
 /**
@@ -74,5 +133,10 @@ export interface AIRouterConfig {
    *
    * @default 'random'
    */
-  strategy?: "random" | "least-loaded";
+  strategy?: "random" | "rate-limit-aware";
+
+  /**
+   * Custom storage adapter for usage data
+   */
+  usageStorage?: UsageStorage;
 }

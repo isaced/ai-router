@@ -1,38 +1,117 @@
-import type { AIRouterConfig, ProviderModel } from '../types/types';
+import type { AIRouterConfig, ProviderModel, Account } from '../types/types';
+import type { ChatRequest } from '../types/chat';
+import { RateLimitManager } from './rateLimitManager';
+
+// Global rate limit manager instance
+let globalRateLimitManager: RateLimitManager | null = null;
+
+/**
+ * Get or create the global rate limit manager
+ */
+function getRateLimitManager(config: AIRouterConfig): RateLimitManager {
+    if (!globalRateLimitManager || config.usageStorage) {
+        globalRateLimitManager = new RateLimitManager(config.usageStorage);
+    }
+    return globalRateLimitManager;
+}
+
+/**
+ * Enhanced provider model with account information
+ */
+export interface ProviderModelWithAccount extends ProviderModel {
+    account: Account;
+}
 
 /**
  * Selects a provider model based on the configuration.
  * 
  * @param config - The configuration for the router.
+ * @param request - Optional chat request for token estimation.
  * @returns The selected provider model.
  */
-export function selectProvider(config: AIRouterConfig): ProviderModel {
+export async function selectProvider(config: AIRouterConfig, request?: ChatRequest): Promise<ProviderModel> {
     if (!config.providers || config.providers.length === 0) {
         throw new Error('No providers configured');
     }
 
-    // Flatten the providers structure
-    const providerModels: Array<ProviderModel> = config.providers.flatMap(provider =>
+    // Flatten the providers structure with account information
+    const providerModels: Array<ProviderModelWithAccount> = config.providers.flatMap(provider =>
         provider.accounts.flatMap(account =>
             account.models.map(model => ({
                 model,
                 endpoint: provider.endpoint || 'https://api.openai.com/v1',
-                apiKey: account.apiKey
+                apiKey: account.apiKey,
+                account
             }))
         )
     );
-
 
     // Random strategy
     if (config.strategy === 'random' || !config.strategy) {
         return providerModels[Math.floor(Math.random() * providerModels.length)];
     }
 
-    // Least-loaded strategy
-    if (config.strategy === 'least-loaded') {
-        // TODO: Implement least-loaded strategy
-        throw new Error('Least-loaded strategy not implemented');
+    // Rate-limit aware strategy
+    if (config.strategy === 'rate-limit-aware') {
+        return await selectRateLimitAwareProvider(providerModels, config, request);
     }
 
-    throw new Error('No provider found for the requested model');
+    throw new Error('Unknown strategy');
+}
+
+/**
+ * Select provider using rate-limit aware strategy
+ */
+async function selectRateLimitAwareProvider(
+    providerModels: ProviderModelWithAccount[],
+    config: AIRouterConfig,
+    request?: ChatRequest
+): Promise<ProviderModel> {
+    const rateLimitManager = getRateLimitManager(config);
+
+    // Estimate tokens for the request
+    const estimatedTokens = request
+        ? rateLimitManager.estimateTokens(request, providerModels[0]?.model)
+        : 0;
+
+    // Filter available providers that can handle the request
+    const availableProviders: ProviderModelWithAccount[] = [];
+
+    for (const pm of providerModels) {
+        const canHandle = await rateLimitManager.canHandleRequest(pm.account, estimatedTokens);
+        if (canHandle) {
+            availableProviders.push(pm);
+        }
+    }
+
+    if (availableProviders.length === 0) {
+        throw new Error('All accounts have exceeded their rate limits');
+    }
+
+    // Calculate availability scores for load balancing
+    const scored: Array<{ provider: ProviderModelWithAccount; score: number }> = [];
+
+    for (const pm of availableProviders) {
+        const score = await rateLimitManager.getAvailabilityScore(pm.account);
+        scored.push({ provider: pm, score });
+    }
+
+    // Sort by score (highest first) and select the best one
+    scored.sort((a, b) => b.score - a.score);
+
+    return scored[0].provider;
+}
+
+/**
+ * Export the global rate limit manager for use in other modules
+ */
+export function getRateLimitManagerInstance(): RateLimitManager | null {
+    return globalRateLimitManager;
+}
+
+/**
+ * Reset the global rate limit manager (useful for testing)
+ */
+export function resetRateLimitManager(): void {
+    globalRateLimitManager = null;
 }

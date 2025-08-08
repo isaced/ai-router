@@ -12,7 +12,7 @@ export interface ChatMessage {
     /**
      * The content of the message.
      */
-    content: string;
+    content?: string;
 }
 
 /**

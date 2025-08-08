@@ -1,30 +1,63 @@
 import type { ChatCompletion } from '../types/completions';
-import type { ProviderModel } from '../types/types';
+import type { ProviderModel, AIRouterConfig } from '../types/types';
 import type { ChatRequest } from '../types/chat';
+import type { ProviderModelWithAccount } from './selectProvider';
+import { getRateLimitManagerInstance } from './selectProvider';
 
 /**
- * Sends a chat request to an AI provider.
+ * Sends a chat request to an AI provider and records usage.
  * 
  * @param providerModel - The provider model to use.
  * @param request - The chat request to send.
+ * @param config - The router configuration (optional, for rate limiting).
  * @returns The chat completion response.
  */
-export async function sendRequest(providerModel: ProviderModel, request: ChatRequest): Promise<ChatCompletion.ChatCompletion> {
+export async function sendRequest(
+    providerModel: ProviderModel,
+    request: ChatRequest,
+    config?: AIRouterConfig
+): Promise<ChatCompletion.ChatCompletion> {
     const endpoint = providerModel.endpoint;
     const url = `${endpoint}/chat/completions`;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${providerModel.apiKey}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...request, model: providerModel.model })
-    });
-    const data = await response.json() as ChatCompletion.ChatCompletion;
-    if (!response.ok) {
-        throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${providerModel.apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ...request, model: providerModel.model })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json() as ChatCompletion.ChatCompletion;
+
+        // Record usage if rate limiting is enabled
+        if (config?.strategy === 'rate-limit-aware') {
+            const rateLimitManager = getRateLimitManagerInstance();
+            if (rateLimitManager && (providerModel as ProviderModelWithAccount).account) {
+                const account = (providerModel as ProviderModelWithAccount).account;
+                const tokensUsed = data.usage?.prompt_tokens || 0;
+                await rateLimitManager.recordRequest(account, tokensUsed);
+            }
+        }
+
+        return data;
+    } catch (error) {
+        // Even on error, record the request for rate limiting
+        if (config?.strategy === 'rate-limit-aware') {
+            const rateLimitManager = getRateLimitManagerInstance();
+            if (rateLimitManager && (providerModel as ProviderModelWithAccount).account) {
+                const account = (providerModel as ProviderModelWithAccount).account;
+                await rateLimitManager.recordRequest(account, 0);
+            }
+        }
+        throw error;
     }
-    return data;
 }
 
 

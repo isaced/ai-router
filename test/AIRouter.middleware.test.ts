@@ -1,6 +1,6 @@
-import { describe, test, expect, beforeEach, spyOn } from "bun:test";
+import { describe, test, expect, beforeEach, afterEach, spyOn } from "bun:test";
 import AIRouter from "../src/AIRouter";
-import type { AIRouterConfig } from "../src/types/types";
+import type { AIRouterConfig, ProviderModel } from "../src/types/types";
 import type { Middleware } from "../src/types/middleware";
 import type { ChatCompletion } from "../src/types/completions";
 import type { ChatRequest } from "../src/types/chat";
@@ -57,11 +57,11 @@ describe("AIRouter Onion Model Middleware", () => {
     mockSelectProvider = spyOn(
       selectProviderModule,
       "selectProvider"
-    ).mockReturnValue({
+    ).mockResolvedValue({
       model: "gpt-3.5-turbo",
       endpoint: "https://api.openai.com/v1",
       apiKey: "test-key",
-    });
+    } as ProviderModel);
 
     mockSendRequest = spyOn(sendRequestModule, "sendRequest").mockResolvedValue(
       mockResponse
@@ -70,6 +70,12 @@ describe("AIRouter Onion Model Middleware", () => {
     // Clear mock call history
     mockSelectProvider.mockClear();
     mockSendRequest.mockClear();
+  });
+
+  afterEach(() => {
+    // Restore all mocks after each test
+    mockSelectProvider.mockRestore();
+    mockSendRequest.mockRestore();
   });
 
   test("should work without middleware", async () => {
@@ -110,7 +116,8 @@ describe("AIRouter Onion Model Middleware", () => {
           { role: "user", content: "Hello" },
           { role: "system", content: "Added by middleware" },
         ]),
-      })
+      }),
+      expect.any(Object) // config parameter
     );
   });
 
@@ -191,7 +198,7 @@ describe("AIRouter Onion Model Middleware", () => {
       const modifiedReq = {
         ...req,
         messages: [
-          { role: "system", content: "Request processed at " + new Date().toISOString() },
+          { role: "system", content: `Request processed at ${new Date().toISOString()}` },
           ...req.messages,
         ],
       };
@@ -231,7 +238,8 @@ describe("AIRouter Onion Model Middleware", () => {
           }),
           { role: "user", content: "Hello" },
         ]),
-      })
+      }),
+      expect.any(Object) // config parameter
     );
 
     // 检查响应是否被修改
@@ -242,7 +250,7 @@ describe("AIRouter Onion Model Middleware", () => {
 
   test("should handle middleware errors properly", async () => {
     const errorMiddleware: Middleware = async (req, next) => {
-      if (req.messages.some(msg => msg.content.includes("error"))) {
+      if (req.messages.some(msg => msg?.content?.includes("error"))) {
         throw new Error("Middleware error");
       }
       return await next(req);

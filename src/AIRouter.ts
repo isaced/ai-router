@@ -48,7 +48,7 @@ class AIRouter {
    *
    * @param {AIRouterConfig} config - Configuration object for the router
    * @param {Provider[]} config.providers - List of AI service providers
-   * @param {'random' | 'least-loaded'} [config.strategy='random'] - Strategy for selecting providers
+   * @param {'random' | 'least-loaded' | 'rate-limit-aware'} [config.strategy='random'] - Strategy for selecting providers
    */
   constructor(config: AIRouterConfig = { providers: [], strategy: "random" }) {
     this.config = config;
@@ -78,15 +78,15 @@ class AIRouter {
   async chat(request: ChatRequest): Promise<ChatCompletion.ChatCompletion> {
     const middlewares = this.middlewares || [];
 
-    // 构建洋葱模型的中间件调用链
+    // Build onion model middleware call chain
     const dispatch = async (i: number, req: ChatRequest): Promise<ChatCompletion.ChatCompletion> => {
       if (i >= middlewares.length) {
-        // 最后一层：实际的 AI 请求处理
-        const providerModel = selectProvider(this.config);
+        // Last layer: actual AI request processing
+        const providerModel = await selectProvider(this.config, req);
         if (!providerModel) {
           throw new Error("No provider model found for the request");
         }
-        return await sendRequest(providerModel, req);
+        return await sendRequest(providerModel, req, this.config);
       }
 
       const currentMiddleware = middlewares[i];

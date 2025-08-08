@@ -1,0 +1,188 @@
+import type { Account, UsageStorage, UsageData } from '../types/types';
+import type { ChatRequest } from '../types/chat';
+import { MemoryUsageStorage } from './usageStorage';
+import { TokenEstimator } from '../utils/tokenEstimator';
+
+/**
+ * Rate limit manager with pluggable storage backend and atomic operation support
+ */
+export class RateLimitManager {
+    private storage: UsageStorage;
+    private tokenEstimator: TokenEstimator;
+
+    constructor(storage?: UsageStorage) {
+        this.storage = storage || new MemoryUsageStorage();
+        this.tokenEstimator = new TokenEstimator();
+    }
+
+    /**
+     * Generate unique account identifier from API key
+     */
+    private getAccountId(account: Account): string {
+        return this.hashApiKey(account.apiKey);
+    }
+
+    /**
+     * Simple hash function for API key
+     */
+    private hashApiKey(apiKey: string): string {
+        let hash = 0;
+        for (let i = 0; i < apiKey.length; i++) {
+            const char = apiKey.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash).toString();
+    }
+
+    /**
+     * Get current usage data, automatically reset if needed
+     */
+    private async getCurrentUsage(accountId: string): Promise<UsageData> {
+        let usage = await this.storage.get(accountId);
+
+        if (!usage) {
+            // Initialize new usage data
+            const now = Date.now();
+            usage = {
+                requestsThisMinute: 0,
+                tokensThisMinute: 0,
+                requestsToday: 0,
+                lastResetTime: {
+                    minute: Math.floor(now / 60000),
+                    day: Math.floor(now / 86400000)
+                }
+            };
+        }
+
+        // Check if we need to reset counters
+        const now = Date.now();
+        const currentMinute = Math.floor(now / 60000);
+        const currentDay = Math.floor(now / 86400000);
+        let needsUpdate = false;
+
+        // Reset minute counters
+        if (usage.lastResetTime.minute !== currentMinute) {
+            usage.requestsThisMinute = 0;
+            usage.tokensThisMinute = 0;
+            usage.lastResetTime.minute = currentMinute;
+            needsUpdate = true;
+        }
+
+        // Reset day counters
+        if (usage.lastResetTime.day !== currentDay) {
+            usage.requestsToday = 0;
+            usage.lastResetTime.day = currentDay;
+            needsUpdate = true;
+        }
+
+        // Save back if we made changes
+        if (needsUpdate) {
+            await this.storage.set(accountId, usage);
+        }
+
+        return usage;
+    }
+
+    /**
+     * Check if account can handle the request
+     */
+    async canHandleRequest(account: Account, estimatedTokens: number = 0): Promise<boolean> {
+        if (!account.rateLimit) {
+            return true; // No limits configured
+        }
+
+        const accountId = this.getAccountId(account);
+        const usage = await this.getCurrentUsage(accountId);
+        const limits = account.rateLimit;
+
+        // Check RPM
+        if (limits.rpm !== undefined && usage.requestsThisMinute >= limits.rpm) {
+            return false;
+        }
+
+        // Check TPM
+        if (limits.tpm !== undefined && (usage.tokensThisMinute + estimatedTokens) > limits.tpm) {
+            return false;
+        }
+
+        // Check RPD
+        if (limits.rpd !== undefined && usage.requestsToday >= limits.rpd) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Record request usage with atomic operation when available
+     */
+    async recordRequest(account: Account, tokensUsed: number = 0): Promise<void> {
+        const accountId = this.getAccountId(account);
+
+        // Use atomic increment if storage supports it
+        if (this.storage.increment) {
+            await this.storage.increment(accountId, 1, tokensUsed);
+            return;
+        }
+
+        // Fallback to read-modify-write (not atomic)
+        const usage = await this.getCurrentUsage(accountId);
+        usage.requestsThisMinute += 1;
+        usage.tokensThisMinute += tokensUsed;
+        usage.requestsToday += 1;
+        await this.storage.set(accountId, usage);
+    }
+
+    /**
+     * Get availability score for load balancing (0-1, higher is better)
+     */
+    async getAvailabilityScore(account: Account): Promise<number> {
+        if (!account.rateLimit) {
+            return 1.0; // No limits = highest score
+        }
+
+        const accountId = this.getAccountId(account);
+        const usage = await this.getCurrentUsage(accountId);
+        const limits = account.rateLimit;
+        let score = 1.0;
+
+        // RPM availability
+        if (limits.rpm !== undefined) {
+            const remaining = Math.max(0, limits.rpm - usage.requestsThisMinute);
+            score *= remaining / limits.rpm;
+        }
+
+        // TPM availability
+        if (limits.tpm !== undefined) {
+            const remaining = Math.max(0, limits.tpm - usage.tokensThisMinute);
+            score *= remaining / limits.tpm;
+        }
+
+        // RPD availability
+        if (limits.rpd !== undefined) {
+            const remaining = Math.max(0, limits.rpd - usage.requestsToday);
+            score *= remaining / limits.rpd;
+        }
+
+        return score;
+    }
+
+    /**
+     * Estimate tokens for a request
+     */
+    estimateTokens(request: ChatRequest, model?: string): number {
+        if (model) {
+            return this.tokenEstimator.estimateTokensByModel(request, model);
+        }
+        return this.tokenEstimator.estimateInputTokens(request);
+    }
+
+    /**
+     * Get current usage data for an account (useful for monitoring)
+     */
+    async getUsage(account: Account): Promise<UsageData | null> {
+        const accountId = this.getAccountId(account);
+        return await this.getCurrentUsage(accountId);
+    }
+}
