@@ -30,4 +30,16 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
-      - run: npm publish
+      - run: |
+          TAG_NAME=${{ github.ref_name }}
+          VERSION=${TAG_NAME#v}
+
+          if [[ "$VERSION" == *-* ]]; then
+            echo "Prerelease version detected: $VERSION"
+            echo "Publishing with tag 'next'..."
+            npm publish --tag next
+          else
+            echo "Release version detected: $VERSION"
+            echo "Publishing with default tag 'latest'..."
+            npm publish
+          fi
