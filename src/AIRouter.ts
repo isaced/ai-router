@@ -99,12 +99,7 @@ class AIRouter {
       const currentMiddleware = middlewares[i];
       return await currentMiddleware(req, (nextReq: ChatRequest) => dispatch(i + 1, nextReq));
     };
-
-    try {
-      return await dispatch(0, request);
-    } catch (error) {
-      throw error;
-    }
+    return await dispatch(0, request);
   }
 
   // Intentionally left without private methods; logic lives in src/core/* modules
