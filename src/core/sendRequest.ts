@@ -2,7 +2,7 @@ import type { ChatCompletion } from '../types/completions';
 import type { ProviderModel, AIRouterConfig } from '../types/types';
 import type { ChatRequest } from '../types/chat';
 import type { ProviderModelWithAccount } from './selectProvider';
-import { getRateLimitManagerInstance } from './selectProvider';
+import type { RateLimitManager } from './rateLimitManager';
 
 /**
  * Sends a chat request to an AI provider and records usage.
@@ -10,12 +10,14 @@ import { getRateLimitManagerInstance } from './selectProvider';
  * @param providerModel - The provider model to use.
  * @param request - The chat request to send.
  * @param config - The router configuration (optional, for rate limiting).
+ * @param rateLimitManager - The rate limit manager instance (optional).
  * @returns The chat completion response.
  */
 export async function sendRequest(
     providerModel: ProviderModel,
     request: ChatRequest,
-    config?: AIRouterConfig
+    config?: AIRouterConfig,
+    rateLimitManager?: RateLimitManager
 ): Promise<ChatCompletion.ChatCompletion> {
     const endpoint = providerModel.endpoint;
     const url = `${endpoint}/chat/completions`;
@@ -37,9 +39,8 @@ export async function sendRequest(
         const data = await response.json() as ChatCompletion.ChatCompletion;
 
         // Record usage if rate limiting is enabled
-        if (config?.strategy === 'rate-limit-aware') {
-            const rateLimitManager = getRateLimitManagerInstance();
-            if (rateLimitManager && (providerModel as ProviderModelWithAccount).account) {
+        if (config?.strategy === 'rate-limit-aware' && rateLimitManager) {
+            if ((providerModel as ProviderModelWithAccount).account) {
                 const account = (providerModel as ProviderModelWithAccount).account;
                 const tokensUsed = data.usage?.prompt_tokens || 0;
                 await rateLimitManager.recordRequest(account, tokensUsed);
@@ -49,9 +50,8 @@ export async function sendRequest(
         return data;
     } catch (error) {
         // Even on error, record the request for rate limiting
-        if (config?.strategy === 'rate-limit-aware') {
-            const rateLimitManager = getRateLimitManagerInstance();
-            if (rateLimitManager && (providerModel as ProviderModelWithAccount).account) {
+        if (config?.strategy === 'rate-limit-aware' && rateLimitManager) {
+            if ((providerModel as ProviderModelWithAccount).account) {
                 const account = (providerModel as ProviderModelWithAccount).account;
                 await rateLimitManager.recordRequest(account, 0);
             }

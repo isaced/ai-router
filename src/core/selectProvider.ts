@@ -1,19 +1,6 @@
 import type { AIRouterConfig, ProviderModel, Account } from '../types/types';
 import type { ChatRequest } from '../types/chat';
-import { RateLimitManager } from './rateLimitManager';
-
-// Global rate limit manager instance
-let globalRateLimitManager: RateLimitManager | null = null;
-
-/**
- * Get or create the global rate limit manager
- */
-function getRateLimitManager(config: AIRouterConfig): RateLimitManager {
-    if (!globalRateLimitManager || config.usageStorage) {
-        globalRateLimitManager = new RateLimitManager(config.usageStorage);
-    }
-    return globalRateLimitManager;
-}
+import type { RateLimitManager } from './rateLimitManager';
 
 /**
  * Enhanced provider model with account information
@@ -26,10 +13,15 @@ export interface ProviderModelWithAccount extends ProviderModel {
  * Selects a provider model based on the configuration.
  * 
  * @param config - The configuration for the router.
+ * @param rateLimitManager - The rate limit manager instance.
  * @param request - Optional chat request for token estimation.
  * @returns The selected provider model.
  */
-export async function selectProvider(config: AIRouterConfig, request?: ChatRequest): Promise<ProviderModel> {
+export async function selectProvider(
+    config: AIRouterConfig,
+    rateLimitManager?: RateLimitManager,
+    request?: ChatRequest
+): Promise<ProviderModel> {
     if (!config.providers || config.providers.length === 0) {
         throw new Error('No providers configured');
     }
@@ -53,7 +45,10 @@ export async function selectProvider(config: AIRouterConfig, request?: ChatReque
 
     // Rate-limit aware strategy
     if (config.strategy === 'rate-limit-aware') {
-        return await selectRateLimitAwareProvider(providerModels, config, request);
+        if (!rateLimitManager) {
+            throw new Error('Rate limit manager is required for rate-limit-aware strategy');
+        }
+        return await selectRateLimitAwareProvider(providerModels, rateLimitManager, request);
     }
 
     throw new Error('Unknown strategy');
@@ -64,10 +59,9 @@ export async function selectProvider(config: AIRouterConfig, request?: ChatReque
  */
 async function selectRateLimitAwareProvider(
     providerModels: ProviderModelWithAccount[],
-    config: AIRouterConfig,
+    rateLimitManager: RateLimitManager,
     request?: ChatRequest
 ): Promise<ProviderModel> {
-    const rateLimitManager = getRateLimitManager(config);
 
     // Estimate tokens for the request
     const estimatedTokens = request
@@ -100,18 +94,4 @@ async function selectRateLimitAwareProvider(
     scored.sort((a, b) => b.score - a.score);
 
     return scored[0].provider;
-}
-
-/**
- * Export the global rate limit manager for use in other modules
- */
-export function getRateLimitManagerInstance(): RateLimitManager | null {
-    return globalRateLimitManager;
-}
-
-/**
- * Reset the global rate limit manager (useful for testing)
- */
-export function resetRateLimitManager(): void {
-    globalRateLimitManager = null;
 }

@@ -3,7 +3,6 @@ import type { Account } from '../src/types/types';
 import { RateLimitManager } from '../src/core/rateLimitManager';
 import type { ChatRequest } from '../src/types/chat';
 import { MemoryUsageStorage } from '../src/core/usageStorage';
-import { resetRateLimitManager } from '../src/core/selectProvider';
 
 describe('RateLimitManager', () => {
 
@@ -32,9 +31,8 @@ describe('RateLimitManager', () => {
             ]
         };
 
-        // Clear storage and reset global state before each test
+        // Clear storage before each test
         storage.clear();
-        resetRateLimitManager();
     });
 
     test('should allow requests when no limits are set', async () => {

@@ -4,6 +4,7 @@ import type { ChatCompletion } from "./types/completions";
 import { selectProvider } from "./core/selectProvider";
 import { sendRequest } from "./core/sendRequest";
 import type { Middleware } from "./types/middleware";
+import { RateLimitManager } from "./core/rateLimitManager";
 
 /**
  * A lightweight, framework-agnostic router for AI/LLM API requests.
@@ -39,6 +40,11 @@ class AIRouter {
   private config: AIRouterConfig;
 
   /**
+   * Rate limit manager instance for this router.
+   */
+  private rateLimitManager: RateLimitManager;
+
+  /**
    * List of middleware functions to use.
    */
   private middlewares: Middleware[] = [];
@@ -52,6 +58,7 @@ class AIRouter {
    */
   constructor(config: AIRouterConfig = { providers: [], strategy: "random" }) {
     this.config = config;
+    this.rateLimitManager = new RateLimitManager(config.usageStorage);
   }
 
   /**
@@ -82,11 +89,11 @@ class AIRouter {
     const dispatch = async (i: number, req: ChatRequest): Promise<ChatCompletion.ChatCompletion> => {
       if (i >= middlewares.length) {
         // Last layer: actual AI request processing
-        const providerModel = await selectProvider(this.config, req);
+        const providerModel = await selectProvider(this.config, this.rateLimitManager, req);
         if (!providerModel) {
           throw new Error("No provider model found for the request");
         }
-        return await sendRequest(providerModel, req, this.config);
+        return await sendRequest(providerModel, req, this.config, this.rateLimitManager);
       }
 
       const currentMiddleware = middlewares[i];
@@ -101,6 +108,14 @@ class AIRouter {
   }
 
   // Intentionally left without private methods; logic lives in src/core/* modules
+
+  /**
+   * Get the rate limit manager instance (for testing purposes)
+   * @internal
+   */
+  getRateLimitManager(): RateLimitManager {
+    return this.rateLimitManager;
+  }
 }
 
 export default AIRouter;

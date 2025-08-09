@@ -3,7 +3,7 @@ import type { AIRouterConfig, Account } from '../src/types/types';
 import type { ChatRequest } from '../src/types/chat';
 import { MemoryUsageStorage } from '../src/core/usageStorage';
 import { RateLimitManager } from '../src/core/rateLimitManager';
-import { selectProvider, resetRateLimitManager } from '../src/core/selectProvider';
+import { selectProvider } from '../src/core/selectProvider';
 
 describe('Rate Limit Aware Strategy', () => {
     let storage: MemoryUsageStorage;
@@ -44,14 +44,13 @@ describe('Rate Limit Aware Strategy', () => {
             ]
         };
 
-        // Clear storage and reset global state before each test
+        // Clear storage before each test
         storage.clear();
-        resetRateLimitManager();
     });
 
     describe('selectProvider with rate-limit-aware strategy', () => {
         test('should select available provider', async () => {
-            const provider = await selectProvider(config, chatRequest);
+            const provider = await selectProvider(config, rateLimitManager, chatRequest);
             expect(provider).toBeDefined();
             expect(provider.model).toBe('gpt-3.5-turbo');
             expect(provider.apiKey).toBe('test-api-key-123');
@@ -63,7 +62,7 @@ describe('Rate Limit Aware Strategy', () => {
                 await rateLimitManager.recordRequest(mockAccount, 100);
             }
 
-            await expect(selectProvider(config, chatRequest)).rejects.toThrow(
+            await expect(selectProvider(config, rateLimitManager, chatRequest)).rejects.toThrow(
                 'All accounts have exceeded their rate limits'
             );
         });
@@ -99,7 +98,7 @@ describe('Rate Limit Aware Strategy', () => {
             }
 
             // Should select account2 (higher availability)
-            const provider = await selectProvider(multiAccountConfig, chatRequest);
+            const provider = await selectProvider(multiAccountConfig, rateLimitManager, chatRequest);
             expect(provider.apiKey).toBe('key-2');
         });
 
@@ -109,17 +108,18 @@ describe('Rate Limit Aware Strategy', () => {
                 strategy: 'random'
             };
 
-            const provider = await selectProvider(randomConfig, chatRequest);
+            const provider = await selectProvider(randomConfig, undefined, chatRequest);
             expect(provider).toBeDefined();
         });
 
         test('should throw error for unknown strategy', async () => {
             const unknownConfig: AIRouterConfig = {
                 ...config,
-                strategy: 'unknown-strategy' as any
+                // @ts-expect-error - Testing unknown strategy
+                strategy: 'unknown-strategy'
             };
 
-            await expect(selectProvider(unknownConfig, chatRequest)).rejects.toThrow('Unknown strategy');
+            await expect(selectProvider(unknownConfig, undefined, chatRequest)).rejects.toThrow('Unknown strategy');
         });
 
         test('should handle empty providers array', async () => {
@@ -128,7 +128,7 @@ describe('Rate Limit Aware Strategy', () => {
                 strategy: 'rate-limit-aware'
             };
 
-            await expect(selectProvider(emptyConfig, chatRequest)).rejects.toThrow('No providers configured');
+            await expect(selectProvider(emptyConfig, undefined, chatRequest)).rejects.toThrow('No providers configured');
         });
     });
 });

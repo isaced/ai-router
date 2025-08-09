@@ -117,7 +117,8 @@ describe("AIRouter Onion Model Middleware", () => {
           { role: "system", content: "Added by middleware" },
         ]),
       }),
-      expect.any(Object) // config parameter
+      expect.any(Object), // config parameter
+      expect.any(Object) // rateLimitManager parameter
     );
   });
 
@@ -239,7 +240,8 @@ describe("AIRouter Onion Model Middleware", () => {
           { role: "user", content: "Hello" },
         ]),
       }),
-      expect.any(Object) // config parameter
+      expect.any(Object), // config parameter
+      expect.any(Object) // rateLimitManager parameter
     );
 
     // 检查响应是否被修改
