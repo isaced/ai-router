@@ -6,27 +6,29 @@ import type { UsageStorage, UsageData } from '../types/types';
 export class MemoryUsageStorage implements UsageStorage {
     private data: Map<string, UsageData> = new Map();
 
-    async get(accountId: string): Promise<UsageData | null> {
-        return this.data.get(accountId) || null;
+    async get(accountModelId: string): Promise<UsageData | null> {
+        return this.data.get(accountModelId) || null;
     }
 
-    async set(accountId: string, usage: UsageData): Promise<void> {
-        this.data.set(accountId, usage);
+    async set(accountModelId: string, usage: UsageData): Promise<void> {
+        this.data.set(accountModelId, usage);
     }
 
     /**
      * Atomically increment usage counters with automatic reset logic
      */
-    async increment(accountId: string, requestCount: number, tokenCount: number): Promise<UsageData> {
-        let usage = this.data.get(accountId);
+    async increment(accountModelId: string, requestCount: number, tokenCount: number): Promise<UsageData> {
+        let usage = this.data.get(accountModelId);
 
         if (!usage) {
             // Initialize new usage data
             const now = Date.now();
             usage = {
+                id: accountModelId,
                 requestsThisMinute: 0,
                 tokensThisMinute: 0,
                 requestsToday: 0,
+                tokensToday: 0,
                 lastResetTime: {
                     minute: Math.floor(now / 60000),
                     day: Math.floor(now / 86400000)
@@ -58,7 +60,7 @@ export class MemoryUsageStorage implements UsageStorage {
         usage.requestsToday += requestCount;
 
         // Save back to storage
-        this.data.set(accountId, usage);
+        this.data.set(accountModelId, usage);
 
         return { ...usage }; // Return a copy
     }

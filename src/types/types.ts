@@ -69,20 +69,20 @@ export interface UsageData {
  */
 export interface UsageStorage {
   /**
-   * Get usage data for an account
+   * Get usage data for a specific account and model
    */
-  get(accountId: string): Promise<UsageData | null>;
+  get(accountModelId: string): Promise<UsageData | null>;
 
   /**
-   * Set usage data for an account
+   * Set usage data for a specific account and model
    */
-  set(accountId: string, usage: UsageData): Promise<void>;
+  set(accountModelId: string, usage: UsageData): Promise<void>;
 
   /**
-   * Atomically increment usage counters
+   * Atomically increment usage counters (atomic operation)
    * Returns the updated usage data after increment
    */
-  increment?(accountId: string, requestCount: number, tokenCount: number): Promise<UsageData>;
+  increment?(accountModelId: string, requestCount: number, tokenCount: number): Promise<UsageData>;
 }
 
 /**
