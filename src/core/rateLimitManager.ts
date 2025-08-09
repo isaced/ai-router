@@ -1,4 +1,4 @@
-import type { Account, UsageStorage, UsageData, AIRouterConfig } from '../types/types';
+import type { Account, UsageStorage, UsageData } from '../types/types';
 import type { ChatRequest } from '../types/chat';
 import { MemoryUsageStorage } from './usageStorage';
 import { TokenEstimator } from '../utils/tokenEstimator';
@@ -192,29 +192,5 @@ export class RateLimitManager {
     async getUsageForModel(account: Account, model: string): Promise<UsageData | null> {
         const accountId = this.getAccountModelIdentifier(account, model);
         return await this.getCurrentUsage(accountId);
-    }
-
-    /**
-     * Summarize usage statistics for all accounts and models
-     */
-    async summarizeUsage(config: AIRouterConfig) {
-        let requestsThisMinuteTotal = 0;
-        let tokensThisMinuteTotal = 0;
-        let requestsTodayTotal = 0;
-        for (const p of config.providers) {
-            for (const account of p.accounts) {
-                for (const model of account.models) {
-                    const usage = await this.getUsage(account, model);
-                    requestsThisMinuteTotal += usage?.requestsThisMinute || 0;
-                    tokensThisMinuteTotal += usage?.tokensThisMinute || 0;
-                    requestsTodayTotal += usage?.requestsToday || 0;
-                }
-            }
-        }
-        return {
-            requestsThisMinute: requestsThisMinuteTotal,
-            tokensThisMinute: tokensThisMinuteTotal,
-            requestsToday: requestsTodayTotal
-        };
     }
 }
