@@ -43,3 +43,5 @@ jobs:
             echo "Publishing with default tag 'latest'..."
             npm publish
           fi
+      - name: Publish to JSR
+        run: npx jsr publish
