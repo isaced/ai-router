@@ -18,17 +18,17 @@ export class RateLimitManager {
     /**
      * Generate unique account identifier from API key
      */
-    private getAccountId(account: Account): string {
-        return this.hashApiKey(account.apiKey);
+    private getAccountId(account: Account, model: string): string {
+        return this.hash(`${account.apiKey}-${model}`);
     }
 
     /**
-     * Simple hash function for API key
+     * Hash a string using a simple hash function
      */
-    private hashApiKey(apiKey: string): string {
+    private hash(input: string): string {
         let hash = 0;
-        for (let i = 0; i < apiKey.length; i++) {
-            const char = apiKey.charCodeAt(i);
+        for (let i = 0; i < input.length; i++) {
+            const char = input.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
             hash = hash & hash; // Convert to 32bit integer
         }
