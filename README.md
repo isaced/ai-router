@@ -117,6 +117,12 @@ export default async function handler(req, res) {
 }
 ```
 
+## 📚 Examples
+
+Explore examples to see how to integrate `ai-router` with different frameworks and use cases:
+
+- [Hono AI Router Example](./examples/hono-ai-router/): Demonstrates how to use `ai-router` with the Hono web framework for managing multiple AI providers with rate limiting and load balancing. This example also supports OpenAI-compatible APIs.
+
 ## 🛠️ Development
 
 ```bash
@@ -138,4 +144,4 @@ MIT
 
 > 🌐 Route your AI. Balance your load. Avoid your limits.
 >
-> Made with ❤️ for developers building the future of AI. 
+> Made with ❤️ for developers building the future of AI.
