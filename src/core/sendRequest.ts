@@ -43,7 +43,7 @@ export async function sendRequest(
             if ((providerModel as ProviderModelWithAccount).account) {
                 const account = (providerModel as ProviderModelWithAccount).account;
                 const tokensUsed = data.usage?.prompt_tokens || 0;
-                await rateLimitManager.recordRequest(account, tokensUsed);
+                await rateLimitManager.recordRequest(account, providerModel.model, tokensUsed);
             }
         }
 
@@ -53,7 +53,7 @@ export async function sendRequest(
         if (config?.strategy === 'rate-limit-aware' && rateLimitManager) {
             if ((providerModel as ProviderModelWithAccount).account) {
                 const account = (providerModel as ProviderModelWithAccount).account;
-                await rateLimitManager.recordRequest(account, 0);
+                await rateLimitManager.recordRequest(account, providerModel.model, 0);
             }
         }
         throw error;

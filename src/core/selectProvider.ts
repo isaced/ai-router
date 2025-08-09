@@ -72,7 +72,7 @@ async function selectRateLimitAwareProvider(
     const availableProviders: ProviderModelWithAccount[] = [];
 
     for (const pm of providerModels) {
-        const canHandle = await rateLimitManager.canHandleRequest(pm.account, estimatedTokens);
+        const canHandle = await rateLimitManager.canHandleRequest(pm.account, pm.model, estimatedTokens);
         if (canHandle) {
             availableProviders.push(pm);
         }
@@ -86,7 +86,7 @@ async function selectRateLimitAwareProvider(
     const scored: Array<{ provider: ProviderModelWithAccount; score: number }> = [];
 
     for (const pm of availableProviders) {
-        const score = await rateLimitManager.getAvailabilityScore(pm.account);
+        const score = await rateLimitManager.getAvailabilityScore(pm.account, pm.model);
         scored.push({ provider: pm, score });
     }
 

@@ -1,4 +1,4 @@
-import type { AIRouterConfig } from "./types/types";
+import type { AIRouterConfig, UsageItem, UsageOverview } from "./types/types";
 import type { ChatRequest } from "./types/chat";
 import type { ChatCompletion } from "./types/completions";
 import { selectProvider } from "./core/selectProvider";
@@ -54,7 +54,7 @@ class AIRouter {
    *
    * @param {AIRouterConfig} config - Configuration object for the router
    * @param {Provider[]} config.providers - List of AI service providers
-   * @param {'random' | 'least-loaded' | 'rate-limit-aware'} [config.strategy='random'] - Strategy for selecting providers
+   * @param {'random' | 'rate-limit-aware'} [config.strategy='random'] - Strategy for selecting providers
    */
   constructor(config: AIRouterConfig = { providers: [], strategy: "random" }) {
     this.config = config;
@@ -110,6 +110,38 @@ class AIRouter {
    */
   getRateLimitManager(): RateLimitManager {
     return this.rateLimitManager;
+  }
+
+  /**
+   * Get current usage overview for all configured accounts and models
+   * This provides visibility into rate limit status and usage across all providers
+   *
+   * @returns {Promise<UsageOverview>} Current usage data for all accounts and models
+   */
+  async getUsageOverview(): Promise<UsageOverview> {
+    const data: UsageItem[] = [];
+
+    for (const provider of this.config.providers) {
+      for (const account of provider.accounts) {
+        for (const model of account.models) {
+          const id = this.rateLimitManager.getAccountModelIdentifier(account, model);
+            const usage = await this.rateLimitManager.getUsageForModel(account, model);
+            if (usage) {
+              data.push({
+                id,
+                model,
+                rateLimit: account.rateLimit,
+                usage,
+              });
+            }
+        }
+      }
+    }
+
+    return {
+      data,
+      timestamp: Date.now()
+    };
   }
 }
 

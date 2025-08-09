@@ -1,4 +1,4 @@
-import type { Account, UsageStorage, UsageData } from '../types/types';
+import type { Account, UsageStorage, UsageData, AIRouterConfig } from '../types/types';
 import type { ChatRequest } from '../types/chat';
 import { MemoryUsageStorage } from './usageStorage';
 import { TokenEstimator } from '../utils/tokenEstimator';
@@ -16,9 +16,9 @@ export class RateLimitManager {
     }
 
     /**
-     * Generate unique account identifier from API key
+     * Get account model identifier
      */
-    private getAccountId(account: Account, model: string): string {
+    getAccountModelIdentifier(account: Account, model: string): string {
         return this.hash(`${account.apiKey}-${model}`);
     }
 
@@ -87,12 +87,12 @@ export class RateLimitManager {
     /**
      * Check if account can handle the request
      */
-    async canHandleRequest(account: Account, estimatedTokens: number = 0): Promise<boolean> {
+    async canHandleRequest(account: Account, model: string, estimatedTokens: number = 0): Promise<boolean> {
         if (!account.rateLimit) {
             return true; // No limits configured
         }
 
-        const accountId = this.getAccountId(account);
+        const accountId = this.getAccountModelIdentifier(account, model);
         const usage = await this.getCurrentUsage(accountId);
         const limits = account.rateLimit;
 
@@ -117,8 +117,8 @@ export class RateLimitManager {
     /**
      * Record request usage with atomic operation when available
      */
-    async recordRequest(account: Account, tokensUsed: number = 0): Promise<void> {
-        const accountId = this.getAccountId(account);
+    async recordRequest(account: Account, model: string, tokensUsed: number = 0): Promise<void> {
+        const accountId = this.getAccountModelIdentifier(account, model);
 
         // Use atomic increment if storage supports it
         if (this.storage.increment) {
@@ -137,12 +137,12 @@ export class RateLimitManager {
     /**
      * Get availability score for load balancing (0-1, higher is better)
      */
-    async getAvailabilityScore(account: Account): Promise<number> {
+    async getAvailabilityScore(account: Account, model: string): Promise<number> {
         if (!account.rateLimit) {
             return 1.0; // No limits = highest score
         }
 
-        const accountId = this.getAccountId(account);
+        const accountId = this.getAccountModelIdentifier(account, model);
         const usage = await this.getCurrentUsage(accountId);
         const limits = account.rateLimit;
         let score = 1.0;
@@ -181,8 +181,40 @@ export class RateLimitManager {
     /**
      * Get current usage data for an account (useful for monitoring)
      */
-    async getUsage(account: Account): Promise<UsageData | null> {
-        const accountId = this.getAccountId(account);
+    async getUsage(account: Account, model: string): Promise<UsageData | null> {
+        const accountId = this.getAccountModelIdentifier(account, model);
         return await this.getCurrentUsage(accountId);
+    }
+
+    /**
+     * Get current usage data for a specific account and model
+     */
+    async getUsageForModel(account: Account, model: string): Promise<UsageData | null> {
+        const accountId = this.getAccountModelIdentifier(account, model);
+        return await this.getCurrentUsage(accountId);
+    }
+
+    /**
+     * Summarize usage statistics for all accounts and models
+     */
+    async summarizeUsage(config: AIRouterConfig) {
+        let requestsThisMinuteTotal = 0;
+        let tokensThisMinuteTotal = 0;
+        let requestsTodayTotal = 0;
+        for (const p of config.providers) {
+            for (const account of p.accounts) {
+                for (const model of account.models) {
+                    const usage = await this.getUsage(account, model);
+                    requestsThisMinuteTotal += usage?.requestsThisMinute || 0;
+                    tokensThisMinuteTotal += usage?.tokensThisMinute || 0;
+                    requestsTodayTotal += usage?.requestsToday || 0;
+                }
+            }
+        }
+        return {
+            requestsThisMinute: requestsThisMinuteTotal,
+            tokensThisMinute: tokensThisMinuteTotal,
+            requestsToday: requestsTodayTotal
+        };
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Rate limiting configuration for an account
+ * Rate limiting configuration for an account and model
  */
 export interface RateLimit {
   /**
@@ -19,15 +19,48 @@ export interface RateLimit {
 }
 
 /**
- * Usage tracking data for rate limits
+ * Usage data for a specific account and model
  */
 export interface UsageData {
+  /**
+   * Unique identifier for the account and model combination
+   */
+  id: string;
+
+  /**
+   * Number of requests made in the current minute
+   */
   requestsThisMinute: number;
+
+  /**
+   * Number of tokens used in the current minute
+   */
   tokensThisMinute: number;
+
+  /**
+   * Number of requests made today
+   */
   requestsToday: number;
+
+  /**
+   * Number of tokens used today
+   */
+  tokensToday: number;
+
+  /**
+   * Timestamp of the last reset (in minutes)
+   */
   lastResetTime: {
-    minute: number;  // Timestamp in minutes
-    day: number;     // Timestamp in days
+
+    /**
+     * Timestamp of the last reset (in minutes)
+     */
+    minute: number;
+
+    /**
+     * Timestamp of the last reset (in days)
+     */
+    day: number;
   };
 }
 
@@ -120,6 +153,46 @@ export interface ProviderModel {
 }
 
 /**
+ * Usage data for a specific account and model
+ */
+export interface UsageItem {
+  /**
+   * Unique identifier for the account and model combination
+   */
+  id: string;
+
+  /**
+   * Model name.
+   */
+  model: string;
+
+  /**
+   * Rate limiting configuration for this account
+   */
+  rateLimit?: RateLimit;
+
+  /**
+   * Usage data for this account and model
+   */
+  usage: UsageData
+}
+
+/**
+ * Overall usage overview for all accounts and models
+ */
+export interface UsageOverview {
+  /**
+   * Usage data for all accounts and models
+   */
+  data: UsageItem[];
+
+  /**
+   * Timestamp when the overview was generated
+   */
+  timestamp: number;
+}
+
+/**
  * Configuration for the AIRouter.
  */
 export interface AIRouterConfig {
@@ -132,6 +205,16 @@ export interface AIRouterConfig {
    * Strategy for selecting providers.
    *
    * @default 'random'
+   *
+   * 'random':
+   *   Select a provider randomly for each request.
+   *   This strategy does not consider rate limits and is suitable for simple load balancing.
+   *
+   * 'rate-limit-aware':
+   *   Select a provider based on current usage and rate limits,
+   *   automatically avoiding accounts that are close to or have exceeded their limits.
+   *   This strategy requires the 'rateLimit' field to be set for each account to work properly.
+   *   Rate limit tracking is performed per apiKey + model combination.
    */
   strategy?: "random" | "rate-limit-aware";
 
