@@ -1,6 +1,6 @@
 # ai-router 🤖🔄
 
-[![npm version](https://badge.fury.io/js/@isaced%2Fai-router.svg)](https://www.npmjs.com/package/@isaced/ai-router)
+[![npm version](https://badge.fury.io/js/@isaced%2Fai-router.svg)](https://www.npmjs.com/package/@isaced/ai-router) [![JSR](https://jsr.io/badges/@isaced/ai-router)](https://jsr.io/@isaced/ai-router)
 
 **A lightweight, framework-agnostic router for AI/LLM API requests.**
 
