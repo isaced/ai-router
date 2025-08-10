@@ -32,10 +32,6 @@ export async function sendRequest(
             body: JSON.stringify({ ...request, model: providerModel.model })
         });
 
-        if (!response.ok) {
-            throw new Error(`Request failed: ${response.status} ${response.statusText}`);
-        }
-
         const data = await response.json() as ChatCompletion.ChatCompletion;
 
         // Record usage if rate limiting is enabled

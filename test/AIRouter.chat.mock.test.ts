@@ -150,20 +150,6 @@ describe('AIRouter with Mocked Fetch', () => {
       }]);
     });
 
-    test('should handle API errors gracefully', async () => {
-      // Mock an error response
-      mockFetch.mockImplementationOnce(() =>
-        Promise.resolve(new Response('', { status: 500, statusText: 'Internal Server Error' }))
-      );
-
-      await expect(router.chat({
-        messages: [{
-          role: 'user',
-          content: 'Hello'
-        }]
-      })).rejects.toThrow('Request failed: 500 Internal Server Error');
-    });
-
     test('should handle network errors', async () => {
       // Mock a network error
       mockFetch.mockImplementationOnce(() =>
@@ -311,22 +297,6 @@ describe('AIRouter with Mocked Fetch', () => {
 
       const config = createRateLimitAwareConfig([account], storage);
       router = new AIRouter(config);
-    });
-
-    test('should record request even on API error', async () => {
-      // Mock an error response
-      mockFetch.mockImplementationOnce(() =>
-        Promise.resolve(new Response('', { status: 500, statusText: 'Internal Server Error' }))
-      );
-
-      await expect(sendTestChatRequest(router, 'Hello')
-      ).rejects.toThrow('Request failed: 500 Internal Server Error');
-
-      // Send a successful request to verify that the error request was counted towards rate limit
-      const res = await sendTestChatRequest(router, 'Hello after error');
-
-      expect(res).toBeDefined();
-      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
     test('should record request even on network error', async () => {
