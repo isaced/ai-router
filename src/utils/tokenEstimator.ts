@@ -16,19 +16,4 @@ export class TokenEstimator {
 
         return Math.ceil(totalChars / 4);
     }
-
-    /**
-     * Estimate tokens based on model type
-     * Different models may have different tokenization patterns
-     */
-    estimateTokensByModel(request: ChatRequest, model: string): number {
-        const baseEstimate = this.estimateInputTokens(request);
-
-        // Apply model-specific adjustments if needed
-        if (model.includes('gpt-4')) {
-            return Math.ceil(baseEstimate * 1.05); // GPT-4 may use slightly more tokens
-        }
-
-        return baseEstimate;
-    }
 }

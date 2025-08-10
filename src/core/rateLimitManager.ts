@@ -1,10 +1,10 @@
 import type { Account, UsageStorage, UsageData } from '../types/types';
 import type { ChatRequest } from '../types/chat';
-import { MemoryUsageStorage } from './usageStorage';
+import { MemoryUsageStorage } from './MemoryUsageStorage';
 import { TokenEstimator } from '../utils/tokenEstimator';
 
 /**
- * Rate limit manager with pluggable storage backend and atomic operation support
+ * Rate limit manager with pluggable storage backend
  */
 export class RateLimitManager {
     private storage: UsageStorage;
@@ -121,12 +121,6 @@ export class RateLimitManager {
     async recordRequest(account: Account, model: string, tokensUsed: number = 0): Promise<void> {
         const accountId = this.getAccountModelIdentifier(account, model);
 
-        // Use atomic increment if storage supports it
-        if (this.storage.increment) {
-            await this.storage.increment(accountId, 1, tokensUsed);
-            return;
-        }
-
         // Fallback to read-modify-write (not atomic)
         const usage = await this.getCurrentUsage(accountId);
         usage.requestsThisMinute += 1;
@@ -172,10 +166,7 @@ export class RateLimitManager {
     /**
      * Estimate tokens for a request
      */
-    estimateTokens(request: ChatRequest, model?: string): number {
-        if (model) {
-            return this.tokenEstimator.estimateTokensByModel(request, model);
-        }
+    estimateTokens(request: ChatRequest): number {
         return this.tokenEstimator.estimateInputTokens(request);
     }
 
@@ -183,14 +174,6 @@ export class RateLimitManager {
      * Get current usage data for an account (useful for monitoring)
      */
     async getUsage(account: Account, model: string): Promise<UsageData | null> {
-        const accountId = this.getAccountModelIdentifier(account, model);
-        return await this.getCurrentUsage(accountId);
-    }
-
-    /**
-     * Get current usage data for a specific account and model
-     */
-    async getUsageForModel(account: Account, model: string): Promise<UsageData | null> {
         const accountId = this.getAccountModelIdentifier(account, model);
         return await this.getCurrentUsage(accountId);
     }

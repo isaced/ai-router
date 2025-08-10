@@ -1,6 +1,6 @@
 import type { AIRouterConfig, ProviderModel, Account } from '../types/types';
 import type { ChatRequest } from '../types/chat';
-import type { RateLimitManager } from './rateLimitManager';
+import type { RateLimitManager } from './RateLimitManager';
 
 /**
  * Enhanced provider model with account information
@@ -65,7 +65,7 @@ async function selectRateLimitAwareProvider(
 
     // Estimate tokens for the request
     const estimatedTokens = request
-        ? rateLimitManager.estimateTokens(request, providerModels[0]?.model)
+        ? rateLimitManager.estimateTokens(request)
         : 0;
 
     // Filter available providers that can handle the request

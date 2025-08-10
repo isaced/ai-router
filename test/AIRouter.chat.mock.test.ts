@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test';
 import AIRouter from '../src/AIRouter';
 import type { AIRouterConfig, Account } from '../src/types/types';
-import { MemoryUsageStorage } from '../src/core/usageStorage';
+import { MemoryUsageStorage } from '../src/core/MemoryUsageStorage';
 import type { ChatCompletion } from '../src/types/completions';
 
 // ============================================================================

@@ -2,7 +2,7 @@ import type { ChatCompletion } from '../types/completions';
 import type { ProviderModel, AIRouterConfig } from '../types/types';
 import type { ChatRequest } from '../types/chat';
 import type { ProviderModelWithAccount } from './selectProvider';
-import type { RateLimitManager } from './rateLimitManager';
+import type { RateLimitManager } from './RateLimitManager';
 
 /**
  * Sends a chat request to an AI provider and records usage.

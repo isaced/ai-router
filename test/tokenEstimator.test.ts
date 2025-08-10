@@ -45,15 +45,4 @@ describe('TokenEstimator', () => {
         const tokens = tokenEstimator.estimateInputTokens(request);
         expect(tokens).toBe(0);
     });
-
-    test('should adjust for model type', () => {
-        const request: ChatRequest = {
-            messages: [{ role: 'user', content: 'Hello world!' }]
-        };
-
-        const gpt3Tokens = tokenEstimator.estimateTokensByModel(request, 'gpt-3.5-turbo');
-        const gpt4Tokens = tokenEstimator.estimateTokensByModel(request, 'gpt-4');
-
-        expect(gpt4Tokens).toBeGreaterThan(gpt3Tokens);
-    });
 });

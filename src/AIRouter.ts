@@ -4,7 +4,7 @@ import type { ChatCompletion } from "./types/completions";
 import { selectProvider } from "./core/selectProvider";
 import { sendRequest } from "./core/sendRequest";
 import type { Middleware } from "./types/middleware";
-import { RateLimitManager } from "./core/rateLimitManager";
+import { RateLimitManager } from "./core/RateLimitManager";
 
 /**
  * A lightweight, framework-agnostic router for AI/LLM API requests.
@@ -125,7 +125,7 @@ class AIRouter {
       for (const account of provider.accounts) {
         for (const model of account.models) {
           const id = this.rateLimitManager.getAccountModelIdentifier(account, model);
-            const usage = await this.rateLimitManager.getUsageForModel(account, model);
+          const usage = await this.rateLimitManager.getUsage(account, model);
             if (usage) {
               data.push({
                 id,

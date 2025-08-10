@@ -72,12 +72,6 @@ export interface UsageStorage {
    * Set usage data for a specific account and model
    */
   set(accountModelId: string, usage: UsageData): Promise<void>;
-
-  /**
-   * Atomically increment usage counters (atomic operation)
-   * Returns the updated usage data after increment
-   */
-  increment?(accountModelId: string, requestCount: number, tokenCount: number): Promise<UsageData>;
 }
 
 /**
