@@ -1,6 +1,7 @@
 import type { AIRouterConfig, ProviderModel, Account } from '../types/types';
 import type { ChatRequest } from '../types/chat';
 import type { RateLimitManager } from './RateLimitManager';
+import { getProviderEndpoint } from './providers';
 
 /**
  * Enhanced provider model with account information
@@ -31,7 +32,7 @@ export async function selectProvider(
         provider.accounts.flatMap(account =>
             account.models.map(model => ({
                 model,
-                endpoint: provider.endpoint || 'https://api.openai.com/v1',
+                endpoint: provider.endpoint ?? getProviderEndpoint(provider.name),
                 apiKey: account.apiKey,
                 account
             }))

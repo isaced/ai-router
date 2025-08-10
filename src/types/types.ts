@@ -1,3 +1,5 @@
+import type { ProviderEndpoints } from "../core/providers";
+
 /**
  * Rate limiting configuration for an account and model
  */
@@ -105,13 +107,14 @@ export interface Provider {
 
   /**
    * Type of the provider.
+   * Corresponds to the keys of the ProviderEndpoints map.
+   * Used to determine the API endpoint for the provider.
    */
-  type?: "openai" | "ollama";
+  type?: keyof typeof ProviderEndpoints;
 
   /**
    * Endpoint for the provider's API.
-   *
-   * @default 'https://api.openai.com/v1'
+   * If not specified, the endpoint will be derived from the provider's type.
    */
   endpoint?: string;
 
