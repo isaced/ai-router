@@ -1,6 +1,6 @@
 # ai-router 🤖🔄
 
-[![npm version](https://badge.fury.io/js/@isaced%2Fai-router.svg)](https://www.npmjs.com/package/@isaced/ai-router) [![JSR](https://jsr.io/badges/@isaced/ai-router)](https://jsr.io/@isaced/ai-router)
+![NPM Version](https://img.shields.io/npm/v/%40isaced%2Fai-router) [![JSR](https://jsr.io/badges/@isaced/ai-router)](https://jsr.io/@isaced/ai-router)
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
