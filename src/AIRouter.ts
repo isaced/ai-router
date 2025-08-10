@@ -23,11 +23,17 @@ import { RateLimitManager } from "./core/RateLimitManager";
  *       endpoint: 'https://api.provider1.com',
  *       accounts: [{
  *         apiKey: 'key1',
- *         models: ['gpt-3.5-turbo', 'gpt-4']
+ *         models: [
+ *           'gpt-3.5-turbo', // Simple string model
+ *           {                // Model with rate limits
+ *             name: 'gpt-4',
+ *             rateLimit: { rpm: 100 }
+ *           }
+ *         ]
  *       }]
  *     }
  *   ],
- *   strategy: 'random'
+ *   strategy: 'rate-limit-aware'
  * };
  * const router = new AIRouter(config);
  * ```
@@ -123,14 +129,17 @@ class AIRouter {
 
     for (const provider of this.config.providers) {
       for (const account of provider.accounts) {
-        for (const model of account.models) {
-          const id = this.rateLimitManager.getAccountModelIdentifier(account, model);
-          const usage = await this.rateLimitManager.getUsage(account, model);
+        for (const modelConfig of account.models) {
+          const modelName = typeof modelConfig === 'string' ? modelConfig : modelConfig.name;
+          const rateLimit = typeof modelConfig === 'string' ? undefined : modelConfig.rateLimit;
+
+          const id = this.rateLimitManager.getAccountModelIdentifier(account, modelName);
+          const usage = await this.rateLimitManager.getUsage(account, modelName);
             if (usage) {
               data.push({
                 id,
-                model,
-                rateLimit: account.rateLimit,
+                model: modelName,
+                rateLimit,
                 usage,
               });
             }

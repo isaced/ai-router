@@ -77,6 +77,21 @@ export interface UsageStorage {
 }
 
 /**
+ * Model configuration with optional rate limiting
+ */
+export interface ModelConfig {
+  /**
+   * Model name
+   */
+  name: string;
+
+  /**
+   * Rate limiting configuration for this model
+   */
+  rateLimit?: RateLimit;
+}
+
+/**
  * Account configuration for an AI service provider.
  */
 export interface Account {
@@ -87,13 +102,9 @@ export interface Account {
 
   /**
    * List of models supported by the account.
+   * Can be either strings (for backward compatibility) or ModelConfig objects (for per-model rate limiting)
    */
-  models: string[];
-
-  /**
-   * Rate limiting configuration for this account
-   */
-  rateLimit?: RateLimit;
+  models: (string | ModelConfig)[];
 }
 
 /**

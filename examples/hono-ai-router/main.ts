@@ -19,10 +19,14 @@ const routerConfig: AIRouterConfig = {
       accounts: [
         {
           apiKey: OPENAI_API_KEY,
-          models: [LLM_MODEL],
-          rateLimit: {
-            rpm: 3,
-          }
+          models: [
+            {
+              name: LLM_MODEL,
+              rateLimit: {
+                rpm: 3,
+              }
+            }
+          ],
         }
       ],
     }

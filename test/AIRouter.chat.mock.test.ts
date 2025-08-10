@@ -29,10 +29,14 @@ const createMockChatResponse = (content: string = '2'): ChatCompletion.ChatCompl
 
 const createMockAccount = (overrides?: Partial<Account>): Account => ({
   apiKey: `test-api-key-${Math.random().toString(36).substring(7)}`,
-  models: ['gpt-3.5-turbo'],
-  rateLimit: {
-    rpm: 2, // Maximum 2 requests per minute
-  },
+  models: [
+    {
+      name: 'gpt-3.5-turbo',
+      rateLimit: {
+        rpm: 2, // Maximum 2 requests per minute
+      }
+    }
+  ],
   ...overrides
 });
 

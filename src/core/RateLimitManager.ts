@@ -1,4 +1,4 @@
-import type { Account, UsageStorage, UsageData } from '../types/types';
+import type { Account, UsageStorage, UsageData, RateLimit } from '../types/types';
 import type { ChatRequest } from '../types/chat';
 import { MemoryUsageStorage } from './MemoryUsageStorage';
 import { TokenEstimator } from '../utils/tokenEstimator';
@@ -86,16 +86,35 @@ export class RateLimitManager {
     }
 
     /**
+     * Get model rate limit configuration from account
+     */
+    private getModelRateLimit(account: Account, model: string): RateLimit | undefined {
+        for (const modelConfig of account.models) {
+            if (typeof modelConfig === 'string') {
+                if (modelConfig === model) {
+                    return undefined; // No rate limit for string-only model configuration
+                }
+            } else {
+                if (modelConfig.name === model) {
+                    return modelConfig.rateLimit;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    /**
      * Check if account can handle the request
      */
     async canHandleRequest(account: Account, model: string, estimatedTokens: number = 0): Promise<boolean> {
-        if (!account.rateLimit) {
+        const rateLimit = this.getModelRateLimit(account, model);
+        if (!rateLimit) {
             return true; // No limits configured
         }
 
         const accountId = this.getAccountModelIdentifier(account, model);
         const usage = await this.getCurrentUsage(accountId);
-        const limits = account.rateLimit;
+        const limits = rateLimit;
 
         // Check RPM
         if (limits.rpm !== undefined && usage.requestsThisMinute >= limits.rpm) {
@@ -133,13 +152,14 @@ export class RateLimitManager {
      * Get availability score for load balancing (0-1, higher is better)
      */
     async getAvailabilityScore(account: Account, model: string): Promise<number> {
-        if (!account.rateLimit) {
+        const rateLimit = this.getModelRateLimit(account, model);
+        if (!rateLimit) {
             return 1.0; // No limits = highest score
         }
 
         const accountId = this.getAccountModelIdentifier(account, model);
         const usage = await this.getCurrentUsage(accountId);
-        const limits = account.rateLimit;
+        const limits = rateLimit;
         let score = 1.0;
 
         // RPM availability

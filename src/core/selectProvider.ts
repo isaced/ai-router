@@ -30,12 +30,15 @@ export async function selectProvider(
     // Flatten the providers structure with account information
     const providerModels: Array<ProviderModelWithAccount> = config.providers.flatMap(provider =>
         provider.accounts.flatMap(account =>
-            account.models.map(model => ({
-                model,
-                endpoint: provider.endpoint ?? getProviderEndpoint(provider.name),
-                apiKey: account.apiKey,
-                account
-            }))
+            account.models.map(modelConfig => {
+                const modelName = typeof modelConfig === 'string' ? modelConfig : modelConfig.name;
+                return {
+                    model: modelName,
+                    endpoint: provider.endpoint ?? getProviderEndpoint(provider.name),
+                    apiKey: account.apiKey,
+                    account
+                };
+            })
         )
     );
 

@@ -42,11 +42,30 @@ const router = new AIRouter({
       accounts: [
         {
           apiKey: 'sk-xxx',
-          models: ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo']
+          models: [
+            // Simple model configuration (no rate limits)
+            'gpt-4-turbo',
+            // Advanced model configuration with per-model rate limits
+            {
+              name: 'gpt-4',
+              rateLimit: {
+                rpm: 100,  // 100 requests per minute
+                tpm: 80000, // 80k tokens per minute
+                rpd: 2000   // 2000 requests per day
+              }
+            },
+            {
+              name: 'gpt-3.5-turbo',
+              rateLimit: {
+                rpm: 500,   // Higher rate limit for cheaper model
+                tpm: 200000
+              }
+            }
+          ]
         },
         {
           apiKey: 'sk-yyy',
-          models: ['gpt-3.5-turbo']
+          models: ['gpt-3.5-turbo'] // No rate limits for this account
         }
       ],
     },
@@ -57,11 +76,21 @@ const router = new AIRouter({
       accounts: [
         {
           apiKey: 'custom-key-1',
-          models: ['custom-model-1', 'custom-model-2'],
+          models: [
+            {
+              name: 'custom-model-1',
+              rateLimit: {
+                rpm: 50,
+                tpm: 30000
+              }
+            },
+            'custom-model-2' // No rate limits
+          ]
         }
       ]
     }
-  ]
+  ],
+  strategy: 'rate-limit-aware' // Use rate-limit aware strategy for automatic load balancing
 });
 
 // Route a chat completion request
@@ -72,6 +101,55 @@ const response = await router.chat({
 
 console.log(response);
 ```
+
+## 🎯 Per-Model Rate Limiting
+
+AI Router now supports per-model rate limiting, allowing you to set different rate limits for different models:
+
+```ts
+const router = new AIRouter({
+  providers: [
+    {
+      name: 'provider',
+      accounts: [
+        {
+          apiKey: 'your-key',
+          models: [
+            // High-end model with strict limits
+            {
+              name: 'gpt-4',
+              rateLimit: {
+                rpm: 50,    // 50 requests per minute
+                tpm: 40000, // 40k tokens per minute
+                rpd: 1000   // 1000 requests per day
+              }
+            },
+            // Cheaper model with relaxed limits
+            {
+              name: 'gpt-3.5-turbo',
+              rateLimit: {
+                rpm: 200,
+                tpm: 150000
+              }
+            },
+            // No rate limits for this model
+            'claude-instant'
+          ]
+        }
+      ]
+    }
+  ],
+  strategy: 'rate-limit-aware'
+});
+```
+
+### Rate Limit Types
+
+- **`rpm`**: Requests Per Minute - Maximum number of API calls per minute
+- **`tpm`**: Tokens Per Minute - Maximum number of input tokens per minute  
+- **`rpd`**: Requests Per Day - Maximum number of API calls per day
+
+The router will automatically select the best available model that can handle your request without exceeding rate limits.
 
 ## ⚙️ Advanced: Middleware
 
