@@ -2,6 +2,8 @@
 
 [![npm version](https://badge.fury.io/js/@isaced%2Fai-router.svg)](https://www.npmjs.com/package/@isaced/ai-router) [![JSR](https://jsr.io/badges/@isaced/ai-router)](https://jsr.io/@isaced/ai-router)
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 **A lightweight, framework-agnostic router for AI/LLM API requests.**
 
 Distribute traffic across multiple providers (OpenAI, Anthropic, Gemini, etc.), accounts, and models with built-in **load balancing**, **failover**, and **easy extensibility**.
