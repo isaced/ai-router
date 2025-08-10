@@ -38,13 +38,14 @@ export class RateLimitManager {
     /**
      * Get current usage data, automatically reset if needed
      */
-    private async getCurrentUsage(accountId: string): Promise<UsageData> {
-        let usage = await this.storage.get(accountId);
+    private async getCurrentUsage(id: string): Promise<UsageData> {
+        let usage = await this.storage.get(id);
 
         if (!usage) {
             // Initialize new usage data
             const now = Date.now();
             usage = {
+                id,
                 requestsThisMinute: 0,
                 tokensThisMinute: 0,
                 requestsToday: 0,
@@ -78,7 +79,7 @@ export class RateLimitManager {
 
         // Save back if we made changes
         if (needsUpdate) {
-            await this.storage.set(accountId, usage);
+            await this.storage.set(id, usage);
         }
 
         return usage;

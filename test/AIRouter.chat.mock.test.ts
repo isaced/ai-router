@@ -137,7 +137,7 @@ describe('AIRouter with Mocked Fetch', () => {
       expect(url).toBe('https://api.test.com/chat/completions');
       expect(options.method).toBe('POST');
       expect(options.headers['Content-Type']).toBe('application/json');
-      expect(options.headers['Authorization']).toMatch(/Bearer test-api-key-/);
+      expect(options.headers.Authorization).toMatch(/Bearer test-api-key-/);
 
       const body = JSON.parse(options.body);
       expect(body.messages).toEqual([{

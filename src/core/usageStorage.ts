@@ -28,7 +28,6 @@ export class MemoryUsageStorage implements UsageStorage {
                 requestsThisMinute: 0,
                 tokensThisMinute: 0,
                 requestsToday: 0,
-                tokensToday: 0,
                 lastResetTime: {
                     minute: Math.floor(now / 60000),
                     day: Math.floor(now / 86400000)

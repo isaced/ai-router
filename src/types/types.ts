@@ -43,11 +43,6 @@ export interface UsageData {
   requestsToday: number;
 
   /**
-   * Number of tokens used today
-   */
-  tokensToday: number;
-
-  /**
    * Timestamp of the last reset (in minutes)
    */
   lastResetTime: {
