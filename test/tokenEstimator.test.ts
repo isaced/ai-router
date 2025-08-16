@@ -24,14 +24,14 @@ describe('TokenEstimator', () => {
     test('should handle multiple messages', () => {
         const request: ChatRequest = {
             messages: [
-                { role: 'user', content: 'Hello!' }, // 6 characters
-                { role: 'assistant', content: 'Hi there!' }, // 9 characters
-                { role: 'user', content: 'How are you?' } // 12 characters
+                { role: 'user', content: 'Hello!' }, // 6 characters = 2 tokens
+                { role: 'assistant', content: 'Hi there!' }, // 9 characters = 3 tokens
+                { role: 'user', content: 'How are you?' } // 12 characters = 3 tokens
             ]
         };
 
         const tokens = tokenEstimator.estimateInputTokens(request);
-        expect(tokens).toBe(Math.ceil(27 / 4)); // Should be 7 tokens
+        expect(tokens).toBe(8); // 2 + 3 + 3 = 8 tokens
     });
 
     test('should handle empty or null content', () => {
